@@ -7,11 +7,12 @@ export interface City {
 }
 
 /**
- * The starter set of 10 cities. Adding a city is as simple as appending an
+ * The starter set of cities. Adding a city is as simple as appending an
  * entry here with its coordinates — the rest of the app is data-driven.
  */
 export const CITIES: City[] = [
   { id: "gothenburg", name: "Gothenburg", country: "Sweden", latitude: 57.71, longitude: 11.97 },
+  { id: "barcelona", name: "Barcelona", country: "Spain", latitude: 41.39, longitude: 2.17 },
   { id: "stockholm", name: "Stockholm", country: "Sweden", latitude: 59.33, longitude: 18.07 },
   { id: "london", name: "London", country: "United Kingdom", latitude: 51.51, longitude: -0.13 },
   { id: "paris", name: "Paris", country: "France", latitude: 48.85, longitude: 2.35 },
