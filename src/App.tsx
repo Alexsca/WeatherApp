@@ -10,6 +10,7 @@ import {
   aggregateByMonth,
   aggregateByDay,
   countDaysAtOrAbove,
+  daysAtOrAbove,
   maxTempRange,
   daysInMonth,
   MONTH_NAMES,
@@ -17,6 +18,14 @@ import {
   type YearPoint,
   type CountPoint,
 } from "./lib/aggregate";
+
+/** Format an ISO date ("2023-07-13") as "13 Jul 2023". */
+function formatDate(iso: string): string {
+  const year = iso.slice(0, 4);
+  const month = MONTH_NAMES[Number(iso.slice(5, 7)) - 1].slice(0, 3);
+  const day = Number(iso.slice(8, 10));
+  return `${day} ${month} ${year}`;
+}
 
 export default function App() {
   const [city, setCity] = useState<City | null>(null);
@@ -28,6 +37,7 @@ export default function App() {
   const [month, setMonth] = useState(1); // January
   const [day, setDay] = useState(13); // 13th
   const [threshold, setThreshold] = useState(30); // °C, for "Hot days" mode
+  const [selectedYear, setSelectedYear] = useState<number | null>(null); // drill-down
 
   // Fetch (cached) history whenever the city changes.
   useEffect(() => {
@@ -78,6 +88,20 @@ export default function App() {
   const totalDays = counts.reduce((sum, c) => sum + c.count, 0);
   const firstYear = counts.length ? counts[0].year : undefined;
   const perYear = counts.length ? (totalDays / counts.length).toFixed(1) : "0";
+
+  // Clear any year drill-down when the inputs behind it change.
+  useEffect(() => {
+    setSelectedYear(null);
+  }, [city, mode, safeThreshold]);
+
+  // The specific days behind the selected year's bar.
+  const selectedDays = useMemo(
+    () =>
+      daily && mode === "threshold" && selectedYear != null
+        ? daysAtOrAbove(daily, safeThreshold, selectedYear)
+        : [],
+    [daily, mode, safeThreshold, selectedYear]
+  );
 
   const latestYear = points.length ? points[points.length - 1].year : undefined;
 
@@ -147,11 +171,48 @@ export default function App() {
                   {firstYear ? ` since ${firstYear}` : ""} — about{" "}
                   <strong>{perYear} days per year</strong>.
                 </p>
-                <CountChart data={counts} />
+                <CountChart
+                  data={counts}
+                  selectedYear={selectedYear}
+                  onSelectYear={setSelectedYear}
+                />
                 <p className="panel__legend">
-                  Counts days whose <em>high</em> reached the threshold · data:
-                  ERA5 reanalysis via Open-Meteo
+                  {selectedYear == null
+                    ? "Tip: tap any year to see exactly which days are counted."
+                    : "Counts days whose high reached the threshold."}{" "}
+                  · data: ERA5 reanalysis via Open-Meteo
                 </p>
+
+                {selectedYear != null && (
+                  <div className="daylist">
+                    <div className="daylist__head">
+                      <strong>
+                        {selectedYear}: {selectedDays.length} day
+                        {selectedDays.length === 1 ? "" : "s"} reached{" "}
+                        {safeThreshold}°C or above
+                      </strong>
+                      <button
+                        type="button"
+                        className="daylist__close"
+                        onClick={() => setSelectedYear(null)}
+                      >
+                        Close ✕
+                      </button>
+                    </div>
+                    {selectedDays.length === 0 ? (
+                      <p className="panel__hint">No days this year met the threshold.</p>
+                    ) : (
+                      <ul className="daylist__items">
+                        {selectedDays.map((d) => (
+                          <li key={d.date} className="daylist__item">
+                            <span>{formatDate(d.date)}</span>
+                            <span className="daylist__temp">{d.high}°C</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
               </>
             )}
           </>

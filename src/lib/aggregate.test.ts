@@ -4,6 +4,7 @@ import {
   aggregateByMonth,
   aggregateByDay,
   countDaysAtOrAbove,
+  daysAtOrAbove,
   maxTempRange,
   daysInMonth,
   type DailySeries,
@@ -97,6 +98,25 @@ describe("countDaysAtOrAbove", () => {
       { year: 2019, count: 1 }, // 16 included
       { year: 2020, count: 1 }, // 31
     ]);
+  });
+});
+
+describe("daysAtOrAbove", () => {
+  it("lists the qualifying days of a year, in date order", () => {
+    // 2019 highs: 01-01=5, 01-31=16, 02-13=9, 12-31=2
+    expect(daysAtOrAbove(sample, 9, 2019)).toEqual([
+      { date: "2019-01-31", high: 16 },
+      { date: "2019-02-13", high: 9 },
+    ]);
+  });
+
+  it("returns an empty list when no day in the year qualifies", () => {
+    expect(daysAtOrAbove(sample, 40, 2020)).toEqual([]);
+  });
+
+  it("skips null readings", () => {
+    // 2020-02-29 is null; only 2020-06-01 (31) clears 30
+    expect(daysAtOrAbove(sample, 30, 2020)).toEqual([{ date: "2020-06-01", high: 31 }]);
   });
 });
 

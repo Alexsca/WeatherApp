@@ -28,6 +28,13 @@ export interface CountPoint {
   count: number;
 }
 
+export interface DayRecord {
+  /** ISO date, "YYYY-MM-DD". */
+  date: string;
+  /** Daily high in °C, rounded to 1 decimal. */
+  high: number;
+}
+
 function round1(n: number): number {
   return Math.round(n * 10) / 10;
 }
@@ -110,6 +117,22 @@ export function countDaysAtOrAbove(daily: DailySeries, threshold: number): Count
   return [...buckets.entries()]
     .map(([year, count]) => ({ year, count }))
     .sort((a, b) => a.year - b.year);
+}
+
+/**
+ * The individual days in a given year whose daily high reached the threshold
+ * or above. Returned in chronological order (the source series already is).
+ * Powers the "click a year to see its days" drill-down.
+ */
+export function daysAtOrAbove(daily: DailySeries, threshold: number, year: number): DayRecord[] {
+  const out: DayRecord[] = [];
+  for (let i = 0; i < daily.time.length; i++) {
+    const t = daily.temperature_2m_max[i];
+    if (t == null) continue;
+    if (parts(daily.time[i]).year !== year) continue;
+    if (t >= threshold) out.push({ date: daily.time[i], high: round1(t) });
+  }
+  return out;
 }
 
 /**

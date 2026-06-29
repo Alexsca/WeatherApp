@@ -2,6 +2,7 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -11,10 +12,13 @@ import type { CountPoint } from "../lib/aggregate";
 
 interface Props {
   data: CountPoint[];
+  selectedYear?: number | null;
+  onSelectYear?: (year: number) => void;
 }
 
-/** Bar chart of how many qualifying days occurred in each year. */
-export default function CountChart({ data }: Props) {
+/** Bar chart of how many qualifying days occurred in each year. Bars are
+ * clickable to drill into the specific days behind a year's count. */
+export default function CountChart({ data, selectedYear, onSelectYear }: Props) {
   if (data.length === 0) {
     return <p className="chart-empty">No data available for this selection.</p>;
   }
@@ -31,7 +35,21 @@ export default function CountChart({ data }: Props) {
             formatter={(value: number) => [`${value} day${value === 1 ? "" : "s"}`, "Days"]}
             labelFormatter={(label) => `Year ${label}`}
           />
-          <Bar dataKey="count" fill="#ef4444" isAnimationActive={false} />
+          <Bar
+            dataKey="count"
+            isAnimationActive={false}
+            cursor={onSelectYear ? "pointer" : undefined}
+            onClick={(entry: { year?: number }) =>
+              entry?.year != null && onSelectYear?.(entry.year)
+            }
+          >
+            {data.map((d) => (
+              <Cell
+                key={d.year}
+                fill={d.year === selectedYear ? "#991b1b" : "#ef4444"}
+              />
+            ))}
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     </div>
