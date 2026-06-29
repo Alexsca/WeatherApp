@@ -8,6 +8,8 @@ long-term trend at a glance, with the latest year highlighted.
 - **Year** — average temperature for each year.
 - **Month** (e.g. January) — that month's average, year by year.
 - **Day** (e.g. 13 Feb) — the temperature on that exact date, year by year.
+- **Hot days** — drag a temperature slider to count how many days the daily
+  high reached that value or above, in total and per year (bar chart by year).
 
 ## Data
 

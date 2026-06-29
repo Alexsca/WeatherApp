@@ -10,6 +10,8 @@ export interface DailySeries {
   time: string[];
   /** Daily mean temperature in °C; may contain nulls for missing days. */
   temperature_2m_mean: (number | null)[];
+  /** Daily maximum (high) temperature in °C; may contain nulls. */
+  temperature_2m_max: (number | null)[];
 }
 
 export interface YearPoint {
@@ -17,6 +19,12 @@ export interface YearPoint {
   /** Aggregated temperature in °C, rounded to 1 decimal. */
   temp: number;
   /** Number of daily values that fed this point (1 for day mode). */
+  count: number;
+}
+
+export interface CountPoint {
+  year: number;
+  /** Number of days in the year meeting the threshold. */
   count: number;
 }
 
@@ -83,6 +91,41 @@ export function aggregateByDay(daily: DailySeries, month: number, day: number): 
     points.push({ year: p.year, temp: round1(t), count: 1 });
   }
   return points.sort((a, b) => a.year - b.year);
+}
+
+/**
+ * Count, per year, how many days the daily high (temperature_2m_max) reached
+ * the threshold or above. Every year present in the data is included (with a
+ * count of 0 if no day qualified), so a chart shows the full timeline.
+ */
+export function countDaysAtOrAbove(daily: DailySeries, threshold: number): CountPoint[] {
+  const buckets = new Map<number, number>();
+  for (let i = 0; i < daily.time.length; i++) {
+    const t = daily.temperature_2m_max[i];
+    if (t == null) continue;
+    const { year } = parts(daily.time[i]);
+    const current = buckets.get(year) ?? 0;
+    buckets.set(year, current + (t >= threshold ? 1 : 0));
+  }
+  return [...buckets.entries()]
+    .map(([year, count]) => ({ year, count }))
+    .sort((a, b) => a.year - b.year);
+}
+
+/**
+ * The rounded min/max of the daily-high series, used to bound the threshold
+ * slider. Falls back to a sensible global range when there is no data.
+ */
+export function maxTempRange(daily: DailySeries): { min: number; max: number } {
+  let min = Infinity;
+  let max = -Infinity;
+  for (const t of daily.temperature_2m_max) {
+    if (t == null) continue;
+    if (t < min) min = t;
+    if (t > max) max = t;
+  }
+  if (min === Infinity) return { min: -10, max: 45 };
+  return { min: Math.floor(min), max: Math.ceil(max) };
 }
 
 function toSortedPoints(buckets: Map<number, number[]>): YearPoint[] {

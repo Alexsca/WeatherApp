@@ -3,6 +3,8 @@ import {
   aggregateByYear,
   aggregateByMonth,
   aggregateByDay,
+  countDaysAtOrAbove,
+  maxTempRange,
   daysInMonth,
   type DailySeries,
 } from "./aggregate";
@@ -20,6 +22,10 @@ const sample: DailySeries = {
   temperature_2m_mean: [
     0, 10, 4, -2,
     5, 6, null, 20,
+  ],
+  temperature_2m_max: [
+    5, 16, 9, 2,
+    11, 12, null, 31,
   ],
 };
 
@@ -65,6 +71,45 @@ describe("aggregateByDay", () => {
   it("skips years where the date is missing or null (e.g. 29 Feb)", () => {
     const feb29 = aggregateByDay(sample, 2, 29);
     expect(feb29).toEqual([]); // 2020-02-29 is null, 2019 has no 29 Feb
+  });
+});
+
+describe("countDaysAtOrAbove", () => {
+  it("counts days whose daily high meets the threshold, per year", () => {
+    // highs: 2019 -> [5,16,9,2]; 2020 -> [11,12,null,31]
+    const result = countDaysAtOrAbove(sample, 10);
+    expect(result).toEqual([
+      { year: 2019, count: 1 }, // only 16 >= 10
+      { year: 2020, count: 3 }, // 11, 12, 31 (null skipped)
+    ]);
+  });
+
+  it("includes years with zero qualifying days", () => {
+    const result = countDaysAtOrAbove(sample, 30);
+    expect(result).toEqual([
+      { year: 2019, count: 0 },
+      { year: 2020, count: 1 }, // only 31 >= 30
+    ]);
+  });
+
+  it("uses >= so the threshold value itself counts", () => {
+    expect(countDaysAtOrAbove(sample, 16)).toEqual([
+      { year: 2019, count: 1 }, // 16 included
+      { year: 2020, count: 1 }, // 31
+    ]);
+  });
+});
+
+describe("maxTempRange", () => {
+  it("returns the floored/ceiled range of daily highs, ignoring nulls", () => {
+    expect(maxTempRange(sample)).toEqual({ min: 2, max: 31 });
+  });
+
+  it("falls back to a global range when there is no data", () => {
+    expect(maxTempRange({ time: [], temperature_2m_mean: [], temperature_2m_max: [] })).toEqual({
+      min: -10,
+      max: 45,
+    });
   });
 });
 

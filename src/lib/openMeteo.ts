@@ -3,7 +3,7 @@ import type { DailySeries } from "./aggregate";
 
 const ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive";
 const START_DATE = "1950-01-01";
-const CACHE_VERSION = "v1";
+const CACHE_VERSION = "v2";
 
 /** In-memory cache so switching modes never refetches within a session. */
 const memoryCache = new Map<string, DailySeries>();
@@ -55,7 +55,7 @@ export async function fetchCityHistory(city: City): Promise<DailySeries> {
   url.searchParams.set("longitude", String(city.longitude));
   url.searchParams.set("start_date", START_DATE);
   url.searchParams.set("end_date", todayISO());
-  url.searchParams.set("daily", "temperature_2m_mean");
+  url.searchParams.set("daily", "temperature_2m_mean,temperature_2m_max");
   url.searchParams.set("timezone", "auto");
 
   const res = await fetch(url.toString());
@@ -63,13 +63,14 @@ export async function fetchCityHistory(city: City): Promise<DailySeries> {
     throw new Error(`Weather data request failed (${res.status}). Please try again.`);
   }
   const json = await res.json();
-  if (!json?.daily?.time || !json?.daily?.temperature_2m_mean) {
+  if (!json?.daily?.time || !json?.daily?.temperature_2m_mean || !json?.daily?.temperature_2m_max) {
     throw new Error("Weather service returned unexpected data.");
   }
 
   const data: DailySeries = {
     time: json.daily.time,
     temperature_2m_mean: json.daily.temperature_2m_mean,
+    temperature_2m_max: json.daily.temperature_2m_max,
   };
 
   memoryCache.set(key, data);

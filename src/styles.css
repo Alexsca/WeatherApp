@@ -159,6 +159,25 @@ body {
   color: var(--ink);
 }
 
+.mode-selector__slider {
+  min-width: 220px;
+}
+
+.mode-selector__slider span {
+  white-space: nowrap;
+}
+
+.mode-selector__slider strong {
+  color: var(--ink);
+}
+
+.mode-selector__slider input[type="range"] {
+  width: 100%;
+  accent-color: var(--danger);
+  cursor: pointer;
+  margin-top: 2px;
+}
+
 /* ---- Panel / chart ---- */
 .panel {
   background: var(--card);
@@ -218,4 +237,15 @@ body {
   color: var(--muted);
   padding: 40px 0;
   text-align: center;
+}
+
+.hotdays-headline {
+  margin: 4px 2px 12px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.hotdays-headline strong {
+  color: var(--danger);
 }

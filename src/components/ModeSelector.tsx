@@ -1,29 +1,38 @@
 import { MONTH_NAMES, daysInMonth } from "../lib/aggregate";
 
-export type Mode = "year" | "month" | "day";
+export type Mode = "year" | "month" | "day" | "threshold";
 
 interface Props {
   mode: Mode;
   month: number; // 1-12, used by month & day modes
   day: number; // 1-31, used by day mode
+  threshold: number; // °C, used by threshold mode
+  thresholdMin: number;
+  thresholdMax: number;
   onModeChange: (mode: Mode) => void;
   onMonthChange: (month: number) => void;
   onDayChange: (day: number) => void;
+  onThresholdChange: (threshold: number) => void;
 }
 
 const MODES: { value: Mode; label: string }[] = [
   { value: "year", label: "Year" },
   { value: "month", label: "Month" },
   { value: "day", label: "Day" },
+  { value: "threshold", label: "Hot days" },
 ];
 
 export default function ModeSelector({
   mode,
   month,
   day,
+  threshold,
+  thresholdMin,
+  thresholdMax,
   onModeChange,
   onMonthChange,
   onDayChange,
+  onThresholdChange,
 }: Props) {
   return (
     <div className="mode-selector">
@@ -72,6 +81,23 @@ export default function ModeSelector({
               )
             )}
           </select>
+        </label>
+      )}
+
+      {mode === "threshold" && (
+        <label className="mode-selector__field mode-selector__slider">
+          <span>
+            Temperature: <strong>{threshold}°C</strong> or above
+          </span>
+          <input
+            type="range"
+            min={thresholdMin}
+            max={thresholdMax}
+            step={1}
+            value={threshold}
+            onChange={(e) => onThresholdChange(Number(e.target.value))}
+            aria-label="Temperature threshold"
+          />
         </label>
       )}
     </div>
